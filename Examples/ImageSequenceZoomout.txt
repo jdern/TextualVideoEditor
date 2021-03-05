@@ -1,0 +1,9 @@
+# Initialisation
+TargetSize 1920 1080
+Font "Arial" 80 "white" "transparent" "white" 0
+
+# Clip de départ
+ImageSequenceZoomout C_Video "Cat*.png" 5
+
+# Creating video
+Create C_Video "Examples/ImageSequenceZoomout.mp4" 24 libx264

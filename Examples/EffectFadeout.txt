@@ -1,0 +1,12 @@
+# Initialisation
+TargetSize 1920 1080
+Font "Arial" 80 "white" "transparent" "white" 0
+
+# Clip de départ
+Load C_end "4.mp4"
+
+# Effects
+EffectFadeout C_Video C_end 0.5 (0,0,0)
+
+# Creating video
+Create C_Video "Examples/EffectFadeout.mp4" 24 libx264

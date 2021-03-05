@@ -1,0 +1,9 @@
+TargetSize 640 360
+Font "ArialUnicode" 100 "white" "transparent" "black" 2
+
+Load V "1.mp4"
+TextCount V V 0 0 1 (center, center)
+
+# Creating video
+Create V "Examples/TextCount.mp4"
+

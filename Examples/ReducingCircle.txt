@@ -1,0 +1,12 @@
+# Initialization
+TargetSize 1920 1080
+Font "Arial" 80 "white" "transparent" "white" 0
+
+# Loading clips
+Load C_end "1.mp4"
+
+# Effects
+ReducingCircle C_Video C_end "The End" 2 5
+
+# Create video
+Create C_Video "Examples/ReducingCircle.mp4" 24 libx264

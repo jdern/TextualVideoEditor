@@ -1,0 +1,12 @@
+# Initialisation
+TargetSize 1920 1080
+Font "Arial" 80 "white" "transparent" "white" 0
+
+# Clip de départ
+Load C_start "1.mp4"
+
+# Effect
+EffectLumContrast C_Video C_start 30 0.4 127
+
+# Creating video
+Create C_Video "Examples/EffectLumContrast.mp4" 24 libx264

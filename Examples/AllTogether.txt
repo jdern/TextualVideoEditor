@@ -1,0 +1,16 @@
+# Initialisation
+TargetSize 1920 1080
+Font "Arial" 80 "white" "transparent" "white" 0
+
+# Load and create 4 video
+Load C1 "1.MP4"
+Subclip C1 C1 0 5
+Duplicate C2 C1
+Duplicate C3 C1
+Duplicate C4 C1
+
+# AllTogether effect
+AllTogether C_Video C1 "Original" C2 "Duplicate 1" C3 "Duplicate 2" C4 "Last video"
+
+# Create Video
+Create C_Video "Examples/AllTogether.mp4" 24 libx264
