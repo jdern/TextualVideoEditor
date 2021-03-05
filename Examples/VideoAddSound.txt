@@ -1,0 +1,13 @@
+# Initialisation
+SetPath "/Volumes/Données/Programmation/VideoEdit/"
+TargetSize 1920 1080
+Font "Arial" 80 "white" "transparent" "white" 0
+
+# Clip de départ
+Load C_start "1.mp4"
+
+# Add sound
+VideoAddSound C_Video C_start "Examples/Sound.wav" 1 5
+
+# Creating video
+Create C_Video "Examples/VideoAddSound.mp4" 24 libx264
