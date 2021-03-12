@@ -14,48 +14,48 @@ os.environ["IMAGEMAGICK_BINARY"] = r"/opt/homebrew/Cellar/imagemagick/7.0.11-2/b
 from moviepy.video.tools.drawing import *
 from moviepy.editor import *
 from moviepy.video.tools import *
-from moviepy.video.fx import *
-#from moviepy.video.tools.subtitles import SubtitlesClip
-#from moviepy.video.tools.credits import credits1
-#from moviepy.video.fx.accel_decel import accel_decel
-#from moviepy.video.fx.blackwhite import blackwhite
-#from moviepy.video.fx.blink import blink
-#from moviepy.video.fx.colorx import colorx
-#from moviepy.video.fx.crop import crop
-#from moviepy.video.fx.even_size import even_size
-#from moviepy.video.fx.fadein import fadein
-#from moviepy.video.fx.fadeout import fadeout
-#from moviepy.video.fx.freeze import freeze
-#from moviepy.video.fx.freeze_region import freeze_region
-#from moviepy.video.fx.gamma_corr import gamma_corr
-#from moviepy.video.fx.headblur import headblur
-#from moviepy.video.fx.invert_colors import invert_colors
-#from moviepy.video.fx.loop import loop
-#from moviepy.video.fx.lum_contrast import lum_contrast
-#from moviepy.video.fx.make_loopable import make_loopable
-#from moviepy.video.fx.margin import margin
-#from moviepy.video.fx.mask_and import mask_and
-#from moviepy.video.fx.mask_color import mask_color
-#from moviepy.video.fx.mask_or import mask_or
-#from moviepy.video.fx.mirror_x import mirror_x
-#from moviepy.video.fx.mirror_y import mirror_y
-#from moviepy.video.fx.painting import painting
-#from moviepy.video.fx.resize import resize
-#from moviepy.video.fx.rotate import rotate
-#from moviepy.video.fx.scroll import scroll
-#from moviepy.video.fx.speedx import speedx
-#from moviepy.video.fx.supersample import supersample
-#from moviepy.video.fx.time_mirror import time_mirror
-#from moviepy.video.fx.time_symmetrize import time_symmetrize
-#from moviepy.audio.fx import audio_fadein
-#from moviepy.audio.fx import audio_fadeout
-#from moviepy.audio.fx import audio_left_right
-#from moviepy.audio.fx import audio_loop
-#from moviepy.audio.fx import audio_normalize
-#from moviepy.audio.fx import volumex
-#from moviepy.video.tools.segmenting import findObjects
+from moviepy.video.fx.accel_decel import accel_decel
+from moviepy.video.fx.blackwhite import blackwhite
+from moviepy.video.fx.blink import blink
+from moviepy.video.fx.colorx import colorx
+from moviepy.video.fx.crop import crop
+from moviepy.video.fx.even_size import even_size
+from moviepy.video.fx.fadein import fadein
+from moviepy.video.fx.fadeout import fadeout
+from moviepy.video.fx.freeze import freeze
+from moviepy.video.fx.freeze_region import freeze_region
+from moviepy.video.fx.gamma_corr import gamma_corr
+from moviepy.video.fx.headblur import headblur
+from moviepy.video.fx.invert_colors import invert_colors
+from moviepy.video.fx.loop import loop
+from moviepy.video.fx.lum_contrast import lum_contrast
+from moviepy.video.fx.make_loopable import make_loopable
+from moviepy.video.fx.margin import margin
+from moviepy.video.fx.mask_and import mask_and
+from moviepy.video.fx.mask_color import mask_color
+from moviepy.video.fx.mask_or import mask_or
+from moviepy.video.fx.mirror_x import mirror_x
+from moviepy.video.fx.mirror_y import mirror_y
+from moviepy.video.fx.painting import painting
+from moviepy.video.fx.resize import resize
+from moviepy.video.fx.rotate import rotate
+from moviepy.video.fx.scroll import scroll
+from moviepy.video.fx.speedx import speedx
+from moviepy.video.fx.supersample import supersample
+from moviepy.video.fx.time_mirror import time_mirror
+from moviepy.video.fx.time_symmetrize import time_symmetrize
+from moviepy.audio.fx.audio_fadein import audio_fadein
+from moviepy.audio.fx.audio_fadeout import audio_fadeout
+from moviepy.audio.fx.audio_left_right import audio_left_right
+from moviepy.audio.fx.audio_loop import audio_loop
+from moviepy.audio.fx.audio_normalize import audio_normalize
+from moviepy.audio.fx.volumex import volumex
+from moviepy.video.tools.segmenting import findObjects
 from skimage.filters import gaussian
 from random import randint
+import ZoomZone
+
+Image.MAX_IMAGE_PIXELS = 933120000
 
 videopath = "/Volumes/Données/Programmation/VideoEdit/"
 ToolPath  = "/Volumes/Données/Programmation/PythonScripts/VideoProcessor/"
@@ -67,7 +67,7 @@ fontcolor = "white"
 fontbgcolor = "transparent"
 fontstrcolor = "white"
 fontstrwidth = 2.
-
+THREADNB = 8
 #https://moviepy.readthedocs.io/en/latest/
 
 # helper function
@@ -407,11 +407,17 @@ def DecodePosition(string):
     if "(" in string:
         listepos = string.replace("(", "").replace(")", "").split(",")
         if len(listepos)!=2: Error(0, "Position can be in the form of center or (top,left)")
+        if bool(re.match('^[+-]{0,1}[0-9]+$', listepos[0])) and bool(re.match('^[+-]{0,1}[0-9]+$', listepos[1])):
+            return (int(listepos[0]), int(listepos[1]))
         return (listepos[0], listepos[1])
     return '"'+string+'"'
 
 def DecodeText(text):
     return re.sub(r"\\n", "\n", text)#.encode('utf-8')
+
+def DecodeBoolean(text):
+    if text=="True" or text=="true" or text=="1": return True
+    return False
 
 def DecodeColor(color, RGB=False):
     # If already decoded in RGB, don't do anything
@@ -425,7 +431,7 @@ def DecodeColor(color, RGB=False):
                 return (float(liste[0][0]),float(liste[0][1]),float(liste[0][2]))
             return (int(liste[0][0]),int(liste[0][1]),int(liste[0][2]))
     # Check if color is None
-    if color=="None" or color=="none": return None
+    if color==None or color=="None" or color=="none": return None
     # Decode color name with equivalent (R,G,B)
     if RGB and color in ColorDict.ColorDict: return ColorDict.ColorDict[color]
     return color
@@ -544,12 +550,13 @@ def VideoClearRotationFlag(file):
 
 # Parse and execute commands found in the script
 def ParseCommand(commands):
-    global videopath, OutWidth, OutHeight, ToolPath, AClips, VClips
+    global videopath, OutWidth, OutHeight, ToolPath, AClips, VClips, THREADNB
     global fontname, fontsize, fontcolor, fontbgcolor, fontstrcolor, fontstrwidth
     global Debug
     fps=0.0
     lineno = 0
     silenceaudio = None
+    command=""
 
     for c in commands:
         lineno = lineno+1
@@ -558,6 +565,7 @@ def ParseCommand(commands):
             sys.stdout.flush()
             sys.stdout.write("\b"*20 )
         if len(c)==0: continue
+        
         command = c[0]
         nbarguments = len(c)-1
         fullcommand = ' '.join(c)
@@ -569,13 +577,9 @@ def ParseCommand(commands):
             #with open(os.path.join(videopath,"ReservedNames.txt"), "w") as text_file:
             #    text_file.write(str(TextClip.list('color')))
             #    text_file.write(str(TextClip.list('font')))
-        elif command=="ClearAll":
-            # ClearAll
-            CheckArgument(c, 0, command, lineno)
-            ClearAndCloseAllClips()
         elif command=="TargetSize":
             # TargetSize width1 height2 fps3
-            # TargetSize UHD/HD/HDR/SD/480p/720p/1080p/2160p/4320p
+            # TargetSize 480p/SD/720p/HDR/1080p/HD/2160p/UHD/4320p
             CheckMinArgument(c, 1, 3, command, lineno)
             
             if c[1]=="480p":
@@ -608,7 +612,7 @@ def ParseCommand(commands):
                     OutHeight = int(c[2])
                     if nbarguments>2: fps = float(c[3])
                 else:
-                    Error(lineno, "Unknown resolution, use: UHD/HD/HDR/SD/480p/720p/1080p/2160p/4320p")
+                    Error(lineno, "Unknown resolution, use: 480p/SD/720p/HDR/1080p/HD/2160p/UHD/4320p")
             DBPrint("OutWidth = "+str(OutWidth))
             DBPrint("OutHeight = "+str(OutHeight))
             if fps>0: DBPrint("fps = "+str(fps))
@@ -634,25 +638,21 @@ def ParseCommand(commands):
         elif command=="FinishHere":
             # FinishHere
             return
-        elif command=="TestFont":
-            # TestFont dest src
-            vdestnm = VClipName(c[1])
-            vsrccl = VGetClip(c[2])
-            s=""
-            i=0
-            for char in range(255, 9000):
-                i = i+1
-                if i % 130==0: s=s+'\n'
-                s=s+chr(char)
-            cl = TextClip(s, font=fontname, fontsize=fontsize).set_duration(30)
-            cl = cl.set_position(("left", "top"))
-            cl = CompositeVideoClip([vsrccl, cl])
-            VSetClip(vdestnm, cl)
+        elif command=="Thread":
+            # Thread number1
+            CheckArgument(c, 1, command, lineno)
+            THREADNB = c[1]
+            DBPrint("THREADNB="+T(THREADNB))
+        elif command=="ClearAll":
+            # ClearAll
+            CheckArgument(c, 0, command, lineno)
+            ClearAndCloseAllClips()
         elif command=="Load":
             # Load dest1 filename2 start3 end4
             CheckMinArgument(c, 2, 4, command, lineno)
             destnm = VClipName(c[1])
             file = os.path.join(videopath,DecodeText(c[2]))
+            if not os.path.isfile(file): Error(lineno, "File "+file+" does not exist!")
             # BUG quicktile video are out of sync, need to detect and convert first
             #if IsVideoQuicktime(file)
             if nbarguments==2:
@@ -679,12 +679,14 @@ def ParseCommand(commands):
             # Subtitle dest srtfile
             CheckArgument(c, 2, command, lineno)
             vdestnm = VClipName(c[1])
+            file = os.path.join(videopath,c[2])
+            if not os.path.isfile(file): Error(lineno, "File "+file+" does not exist!")
             DBPrint2("generator = lambda txt: TextClip(txt, font=fontname, fontsize=fontsize, color=fontcolor, bg_color=fontbgcolor, stroke_color=fontstrcolor, stroke_width=fontstrwidth)")
-            DBPrint2("sub = SubtitlesClip(",T(os.path.join(videopath,c[2])), ", generator)")
+            DBPrint2("sub = SubtitlesClip(",T(file), ", generator)")
             DBPrint2('sub = sub.set_position(("center", "bottom"))')
             DBPrint2(vdestnm, "= CompositeVideoClip([",vdestnm,", sub])")
             generator = lambda txt: TextClip(txt, font=fontname, fontsize=fontsize, color=fontcolor, bg_color=fontbgcolor, stroke_color=fontstrcolor, stroke_width=fontstrwidth)
-            sub = SubtitlesClip(os.path.join(videopath,DecodeText(c[2])), generator)
+            sub = SubtitlesClip(file, generator)
             sub = sub.set_position(("center", "bottom"))
             cl = CompositeVideoClip([VGetClip(vdestnm), sub])
             VSetClip(vdestnm, cl)
@@ -724,8 +726,8 @@ def ParseCommand(commands):
             vdestnm = VClipName(c[1])
             vsrcnm = VClipName(c[2])
             cl = VGetClip(vsrcnm)
-            DBPrint2(vdestnm, vsrcnm, ".resize(new_size=",c[3],")")
-            VSetClip(vdestnm, cl.resize(new_size=float(c[3])))
+            DBPrint2(vdestnm, vsrcnm, ".resize(",c[3],")")
+            VSetClip(vdestnm, cl.resize(float(c[3])))
         elif command=="Position":
             # Position dest1 source2 position3
             CheckArgument(c, 3, command, lineno)
@@ -741,10 +743,33 @@ def ParseCommand(commands):
             vsrcnm = VClipName(c[2])
             DBPrint(vdestnm+"="+vsrcnm+".video.crop(x1="+c[3]+",x2="+c[4]+",y1="+c[5]+',y2='+c[6]+")")
             cl = VGetClip(vsrcnm)
-            cl= cl.video.crop(x1=c[3], x2=c[4], y1=c[5], y2=c[6])
+            cl= cl.crop(x1=c[3], y1=c[4], x2=c[5], y2=c[6])
             VSetClip(vdestnm, cl)
+        elif command=="ZoomOn":
+            # ZoomOn dest source factor start duration position 
+            CheckMinArgument(c, 3, 6, command, lineno)
+            vdestnm = VClipName(c[1])
+            vsrcnm = VClipName(c[2])
+            cl = VGetClip(vsrcnm)
+            factor = float(c[3])
+            start = 0
+            duration = cl.duration
+            position = (int(OutWidth/2), int(OutHeight/2))
+            if nbarguments>3: start = DecodeTime(c[4])
+            if nbarguments>4: duration = DecodeTime(c[5])
+            if nbarguments>5: position = DecodePosition(c[6])
+            x1 = int(position[0]*factor-OutWidth/2)
+            y1 = int(position[1]*factor-OutHeight/2)
+            x2 = int(position[0]*factor+OutWidth/2)
+            y2 = int(position[1]*factor+OutHeight/2)
+            DBPrint2(vdestnm, vsrcnm, ".resize(",factor,")")
+            DBPrint2(vdestnm,"=",vsrcnm,".video.crop(x1=",x1,",x2=",y1,",y1=",x2,',y2=',y2,")")
+            clipBefore, clipEffect, clipAfter = SplitVideoForEffect(cl, start, duration)
+            clipEffect = clipEffect.resize(factor)
+            clipEffect = clipEffect.crop(x1=x1, y1=y1, x2=x2, y2=y2)
+            VSetClip(vdestnm, JointVideoAfterEffect(clipBefore, clipEffect, clipAfter))
         elif command=="Rotate":
-            # rRtate dest source angle
+            # Rotate dest source angle
             CheckArgument(c, 3, command, lineno)
             vdestnm = VClipName(c[1])
             vsrcnm = VClipName(c[2])
@@ -860,6 +885,8 @@ def ParseCommand(commands):
             source = VGetClip(vsrcnm)
             position = c[4]
             start = DecodeTime(c[5])
+            sound = os.path.join(ToolPath,"Sounds/typewriter.mp3")
+            if not os.path.isfile(sound): Error(lineno, "Installation error, file "+sound+" does not exist!")
             eduration = DecodeTime(c[6])
             clipBefore, clipEffect, clipAfter = SplitVideoForEffect(source, start, eduration)
             eduration = clipEffect.duration
@@ -885,7 +912,7 @@ def ParseCommand(commands):
             DBPrint('    clips_letters.append(clip_text.set_start(times_start[i]).set_end(times_start[i+1]))')
             DBPrint('cl = CompositeVideoClip(clips_letters, size=clip_text.size).set_position(position)')
             DBPrint('clipEffect = CompositeVideoClip([clipEffect, cl], size=(OutWidth,OutHeight))')
-            DBPrint('audio_background = AudioFileClip('+T(os.path.join(ToolPath,"typewriter.mp3"))+')')
+            DBPrint('audio_background = AudioFileClip('+T(sound)+')')
             DBPrint('audio_background = audio_background.subclip(t_end=MovingTxtDuration)')
             DBPrint('final_audio = CompositeAudioClip([clipEffect.audio, audio_background])')
             DBPrint('clipEffect = clipEffect.set_audio(final_audio)')
@@ -907,7 +934,7 @@ def ParseCommand(commands):
             cl = CompositeVideoClip(clips_letters, size=clip_text.size).set_position(position)
             clipEffect = CompositeVideoClip([clipEffect, cl], size=(OutWidth,OutHeight))
             # Add typewritter sound
-            audio_background = AudioFileClip(os.path.join(ToolPath,"typewriter.mp3"))
+            audio_background = AudioFileClip(sound)
             audio_background = audio_background.subclip(t_end=MovingTxtDuration)
             final_audio = CompositeAudioClip([clipEffect.audio, audio_background])
             clipEffect = clipEffect.set_audio(final_audio)
@@ -1018,11 +1045,15 @@ def ParseCommand(commands):
             # Image dest1 sourcepic2 duration3 scale4 
             CheckArgument(c, 4, command, lineno)
             vdestnm = VClipName(c[1])
-            DBPrint(vdestnm+" = ImageClip("+os.path.join(videopath,DecodeText(c[2]))+").set_duration("+c[3]+").resize("+c[4]+")")
-            DBPrint2(vdestnm, ".set_audio(AudioFileClip(",os.path.join(ToolPath,"Silence45M.mp3"),"))")
-            cl = ImageClip(os.path.join(videopath,DecodeText(c[2]))).set_duration(DecodeTime(c[3])).resize(float(c[4]))
+            sound = os.path.join(ToolPath,"Silence45M.mp3")
+            if not os.path.isfile(sound): Error(lineno, "Installation corrupted, file "+sound+" does not exist!")
+            file = os.path.join(videopath,DecodeText(c[2]))
+            if not os.path.isfile(file): Error(lineno, "File "+file+" does not exist!")
+            DBPrint(vdestnm+" = ImageClip("+sound+").set_duration("+c[3]+").resize("+c[4]+")")
+            DBPrint2(vdestnm, ".set_audio(AudioFileClip(",sound,"))")
+            cl = ImageClip(file).set_duration(DecodeTime(c[3])).resize(float(c[4]))
             # Add blanck audio to image to avoid an error when creating the file at the end
-            if silenceaudio == None: silenceaudio = AudioFileClip(os.path.join(ToolPath,"Silence45M.mp3"))
+            if silenceaudio == None: silenceaudio = AudioFileClip(sound)
             cl.set_audio(silenceaudio)
             #cl = CompositeVideoClip([cl])
             VSetClip(c[1], cl)
@@ -1033,6 +1064,7 @@ def ParseCommand(commands):
             vsrcnm = VClipName(c[2])
             vsrccl = VGetClip(vsrcnm)
             file = os.path.join(videopath,DecodeText(c[3]))
+            if not os.path.isfile(file): Error(lineno, "File "+file+" does not exist!")
             duration = DecodeTime(c[4])
             scale = float(c[5])
             position=DecodePosition(c[6])
@@ -1045,11 +1077,11 @@ def ParseCommand(commands):
             if ".gif" in file.lower() or ".png" in file.lower(): mask=True
             if ".gif" in file.lower(): gif=True
             if gif:
-                DBPrint2("logo = VideoFileClip(",T(os.path.join(videopath,DecodeText(file))),", has_mask=",mask,").set_duration(",duration,").resize(",scale,").set_position(", T(c[6]),")")
-                logo = VideoFileClip(os.path.join(videopath,DecodeText(file)), has_mask=mask).set_duration(duration).resize(scale).set_position(position)
+                DBPrint2("logo = VideoFileClip(",T(file),", has_mask=",mask,").set_duration(",duration,").resize(",scale,").set_position(", T(c[6]),")")
+                logo = VideoFileClip(file, has_mask=mask).set_duration(duration).resize(scale).set_position(position)
             else:
-                DBPrint2("logo = ImageClip(",T(os.path.join(videopath,DecodeText(file))),", transparent=", mask,").set_duration(",duration,").resize(",scale,").set_position(",position,")")
-                logo = ImageClip(os.path.join(videopath,DecodeText(file)), transparent=True).set_duration(duration).resize(scale).set_position(position)
+                DBPrint2("logo = ImageClip(",T(file),", transparent=", mask,").set_duration(",duration,").resize(",scale,").set_position(",position,")")
+                logo = ImageClip(file, transparent=True).set_duration(duration).resize(scale).set_position(position)
             DBPrint2("before, effect, after = SplitVideoForEffect(",vsrcnm,", ", start,", ",duration,")")
             before, effect, after = SplitVideoForEffect(vsrccl, start, duration)
             DBPrint2("effect = CompositeVideoClip([effect, logo])")
@@ -1108,7 +1140,7 @@ def ParseCommand(commands):
             for picname in file_list_sorted:
                 cl = ImageClip(picname).set_fps(25).set_duration(float(c[3])).resize((OutWidth,OutHeight))
                 # Thanks to https://gist.github.com/mowshon/2a0664fab0ae799734594a5e91e518d5
-                cl = zoom_in_effect(cl, float(c[3]))
+                cl = zoom_out_effect(cl, float(c[3]))
                 slides.append(cl)
             VSetClip(vdestnm, concatenate_videoclips(slides, method="compose"))
         elif command=="PictureShadingColor":   # Bug and missing color
@@ -1116,13 +1148,15 @@ def ParseCommand(commands):
             CheckArgument(c, 3, command, lineno)
             vdestnm = VClipName(c[1])
             duration = float(c[3])
+            file = os.path.join(videopath,c[2])
+            if not os.path.isfile(file): Error(lineno, "File "+file+" does not exist!")
             DBPrint2('duration = ',duration)
             DBPrint2('def f(t, size, a=np.pi / 3, thickness=20):')
             DBPrint2('    w, h = size')
             DBPrint2('    v = thickness * np.array([np.cos(a), np.sin(a)])[::-1]')
             DBPrint2('    center = [int(t * w / duration), h / 2]')
             DBPrint2('    return color_gradient(size, center, v, 0.6, 0.0)')
-            DBPrint2('logo = ImageClip(',T(os.path.join(videopath,c[2])),', duration=duration).add_mask()')
+            DBPrint2('logo = ImageClip(',T(file),', duration=duration).add_mask()')
             DBPrint2('screen = logo.on_color((OutWidth,OutHeight), color=(0, 0, 0), pos="center")')
             DBPrint2('shade = ColorClip((OutWidth,OutHeight), color=(0, 0, 0))')
             DBPrint2('mask_frame = lambda t: f(t, (OutWidth,OutHeight), duration)')
@@ -1133,7 +1167,7 @@ def ParseCommand(commands):
                 v = thickness * np.array([np.cos(a), np.sin(a)])[::-1]
                 center = [int(t * w / duration), h / 2]
                 return color_gradient(size, center, v, 0.6, 0.0)
-            logo = ImageClip(os.path.join(videopath,c[2]), duration=duration).add_mask()
+            logo = ImageClip(file, duration=duration).add_mask()
             #screen = logo.on_color((OutWidth,OutHeight), color=(0, 0, 0), pos="center")
             shade = ColorClip((OutWidth,OutHeight), color=(0, 0, 0))
             mask_frame = lambda t: f(t, (OutWidth,OutHeight), duration)
@@ -1225,6 +1259,7 @@ def ParseCommand(commands):
             CheckArgument(c, 2, command, lineno)
             dest = AClipName(c[1])
             file = os.path.join(videopath,DecodeText(c[2]))
+            if not os.path.isfile(file): Error(lineno, "File "+file+" does not exist!")
             DBPrint2(dest," = AudioFileClip(",T(file),")")
             audio = AudioFileClip(file)
             ASetClip(dest, audio)
@@ -1252,7 +1287,7 @@ def ParseCommand(commands):
             ASetClip(adestnm, clip)
         elif command=="AudioDelayRepeat":
             # AudioDelayRepeat dest1 source2 delay3 repeat4 decay5
-            CheckArgument(c, 0, command, lineno)
+            CheckArgument(c, 5, command, lineno)
             adestnm = AClipName(c[1])
             asourcenm = AClipName(c[2])
             asourcecl = AGetClip(asourcenm)
@@ -1277,8 +1312,7 @@ def ParseCommand(commands):
             CheckArgument(c, 4, command, lineno)
             adestnm = AClipName(c[1])
             language = c[2]
-            slow=False
-            if c[3]=="True": slow=True
+            slow=DecodeBoolean(c[3])
             text = DecodeText(c[4])
             DBPrint2('speech = gTTS(text = ',T(text),', lang = ',T(language),', slow = ',T(slow),')')
             DBPrint2('f = NamedTemporaryFile(delete=False)')
@@ -1303,6 +1337,7 @@ def ParseCommand(commands):
             if volume>1 or volume<0: Error(lineno, "Volume must be between 0 and 1")
             source = AGetClip(asourcenm)
             file = os.path.join(videopath,DecodeText(c[3]))
+            if not os.path.isfile(file): Error(lineno, "File "+file+" does not exist!")
             DBPrint("source = "+asourcenm)
             DBPrint("source = source.fx(afx.volumex, 1.-"+str(volume)+")")
             DBPrint("audio_background = AudioFileClip("+file+")")
@@ -1331,13 +1366,14 @@ def ParseCommand(commands):
             vsourcenm = VClipName(c[2])
             vsourcecl = VGetClip(vsourcenm)
             file = os.path.join(videopath,DecodeText(c[3]))
+            if not os.path.isfile(file): Error(lineno, "File "+file+" does not exist!")
             volume = float(c[4])
             if volume>1 or volume<0: Error(lineno, "Volume must be between 0 and 1")
             start = DecodeTime(c[5])
             DBPrint2("audio = AudioFileClip(",T(file),")")
-            DBPrint2("audio = audio.fx(afx.volumex, ", 1.-volume,")")
+            DBPrint2("audio = audio.fx(afx.volumex, ", volume,")")
             audio = AudioFileClip(file)
-            audio = audio.fx(afx.volumex, 1.-volume)
+            audio = audio.fx(afx.volumex, volume)
             duration = audio.duration
             DBPrint2("clipBefore, clipEffect, clipAfter = SplitVideoForEffect(",vsourcenm,", ", start,", ",duration,")")
             clipBefore, clipEffect, clipAfter = SplitVideoForEffect(vsourcecl, start, duration)
@@ -1390,23 +1426,25 @@ def ParseCommand(commands):
             DBPrint(vdestnm+" = "+vsrcnm + ".fx(vfx.blackwhite, RGB="+str(c[3])+")")
             VSetClip(vdestnm, VGetClip(c[2]).fx(vfx.blackwhite, RGB=c[3]))
         elif command=="EffectFadein": # Tested
-            # EffectFadein destination1 source2 source3 duration4 color5
+            # EffectFadein destination1 source2 duration3 color4
             CheckArgument(c, 4, command, lineno)
             vdestnm = VClipName(c[1])
             vsrcnm = VClipName(c[2])
-            c[4] = DecodeColor(c[4])
-            if c[4]==None: c[4] = (0,0,0)
-            DBPrint(vdestnm+" = "+vsrcnm + ".fx(vfx.fadein, "+c[3]+", initial_color="+str(c[4])+")")
-            VSetClip(vdestnm, VGetClip(vsrcnm).fx(vfx.fadein, float(c[3]), initial_color=c[4]))
+            duration = DecodeTime(c[3])
+            color = DecodeColor(c[4])
+            if color==None: color = (0,0,0)
+            DBPrint(vdestnm+" = "+vsrcnm + ".fx(vfx.fadein, "+T(duration)+", initial_color="+T(color)+")")
+            VSetClip(vdestnm, VGetClip(vsrcnm).fx(vfx.fadein, duration, initial_color=color))
         elif command=="EffectFadeout": # Tested
             # EffectFadeout destination1 source2 source3 duration4 color5
             CheckArgument(c, 4, command, lineno)
             vdestnm = VClipName(c[1])
             vsrcnm = VClipName(c[2])
-            c[4] = DecodeColor(c[4])
-            if c[4]==None: c[4] = (0,0,0)
-            DBPrint(vdestnm+" = "+vsrcnm + ".fx(vfx.fadeout, "+c[3]+", final_color="+str(c[4])+")")
-            VSetClip(vdestnm, VGetClip(vsrcnm).fx(vfx.fadeout, float(c[3]), final_color=c[4]))
+            duration = DecodeTime(c[3])
+            color = DecodeColor(c[4])
+            if color==None: color = (0,0,0)
+            DBPrint(vdestnm+" = "+vsrcnm + ".fx(vfx.fadeout, "+T(duration)+", final_color="+T(color)+")")
+            VSetClip(vdestnm, VGetClip(vsrcnm).fx(vfx.fadeout, duration, final_color=color))
         elif command=="EffectCrossFadein":
             # EffectCrossFadein dest1 source2 source3 duration4
             CheckArgument(c, 4, command, lineno)
@@ -1425,6 +1463,91 @@ def ParseCommand(commands):
             clip2 = clip2.crossfadein(float(c[4]))
             clip3 = CompositeVideoClip([clip1b, clip2], size=(OutWidth,OutHeight))
             VSetClip(vdestnm, concatenate_videoclips([clip1a, clip3]))
+        elif command=="EffectClipFreeze":
+            # EffectClipFreeze dest1 source2 Starttime3 duration4
+            CheckArgument(c, 4, command, lineno)
+            vdestnm = VClipName(c[1])
+            vsrcnm  = VClipName(c[2])
+            clip = VGetClip(vsrcnm)
+            start  = DecodeTime(c[3])
+            duration = DecodeTime(c[4])
+            DBPrint2(vdestnm," = ",vsrcnm,".fx(vfx.freeze, t=",start,", freeze_duration=",duration,")")
+            clip = clip.fx(vfx.freeze, t=start, freeze_duration=duration)
+            VSetClip(vdestnm, clip)
+        elif command=="EffectClipInvertColors":
+            # EffectClipInvertColors dest1 source2 start3 duration4
+            CheckArgument(c, 4, command, lineno)
+            vdestnm = VClipName(c[1])
+            vsrcnm  = VClipName(c[2])
+            clip = VGetClip(vsrcnm)
+            start  = DecodeTime(c[3])
+            duration = DecodeTime(c[4])
+            DBPrint2("before, effect, after = SplitVideoForEffect(",vsrcnm,", ", start,", ",duration,")")
+            before, effect, after = SplitVideoForEffect(clip, start, duration)
+            if effect!=None:
+                DBPrint2(vdestnm," = ",vsrcnm,".fx(vfx.freeze, t=",start,", freeze_duration=",duration,")")
+                effect = effect.fx(vfx.invert_colors)
+            DBPrint2(vdestnm," = JointVideoAfterEffect(before, effect, after))")
+            VSetClip(vdestnm, JointVideoAfterEffect(before, effect, after))
+        elif command=="EffectClipSpeedX":
+            # EffectClipSpeedX dest1 source2 factor3 start4 duration5
+            CheckArgument(c, 5, command, lineno)
+            vdestnm = VClipName(c[1])
+            vsrcnm  = VClipName(c[2])
+            clip = VGetClip(vsrcnm)
+            factor = float(c[3])
+            start  = DecodeTime(c[4])
+            duration = DecodeTime(c[5])
+            DBPrint2("before, effect, after = SplitVideoForEffect(",vsrcnm,", ", start,", ",duration,")")
+            before, effect, after = SplitVideoForEffect(clip, start, duration*factor)
+            if effect!=None:
+                DBPrint2(vdestnm," = ",vsrcnm,".fx(vfx.speedx, ",factor,")")
+                effect = effect.fx(vfx.speedx, factor)
+            DBPrint2(vdestnm," = JointVideoAfterEffect(before, effect, after))")
+            VSetClip(vdestnm, JointVideoAfterEffect(before, effect, after))
+        elif command=="EffectClipRotate":
+            # EffectClipRotate dest1 source2 start3 duration4 angle5
+            CheckArgument(c, 5, command, lineno)
+            vdestnm = VClipName(c[1])
+            vsrcnm  = VClipName(c[2])
+            clip = VGetClip(vsrcnm)
+            start  = DecodeTime(c[3])
+            duration = DecodeTime(c[4])
+            angle = float(c[5])
+            DBPrint2("before, effect, after = SplitVideoForEffect(",vsrcnm,", ", start,", ",duration,")")
+            before, effect, after = SplitVideoForEffect(clip, start, duration)
+            if effect!=None:
+                DBPrint2(vdestnm," = ",vsrcnm,".fx(vfx.freeze, t=",start,", freeze_duration=",duration,")")
+                effect = effect.fx(vfx.rotate, lambda t: angle*t, expand=False).set_duration(duration)
+            DBPrint2(vdestnm," = JointVideoAfterEffect(before, effect, after))")
+            VSetClip(vdestnm, JointVideoAfterEffect(before, effect, after))
+        elif command=="EffectClipRotateScale":
+            # EffectClipRotate dest1 source2 bgcolor3
+            CheckArgument(c, 3, command, lineno)
+            vdestnm = VClipName(c[1])
+            vsrcnm  = VClipName(c[2])
+            clip = VGetClip(vsrcnm)
+            color = DecodeColor(c[3])
+            duration = clip.duration
+            angle = 280
+            if duration<3.5: Error(lineno, "This effect needs a video clip duration at least of 3s")
+            DBPrint2("angle = ", angle)
+            DBPrint2("before, effect, after = SplitVideoForEffect(",vsrcnm,", ", duration-3.3,", ",3,")")
+            DBPrint2('effect = effect.resize(lambda t: 0.00001+(3-t)/(3)).set_position("center","center")')
+            DBPrint2('colclip = ColorClip((OutWidth,OutHeight), ',color,', duration=3)')
+            DBPrint2('effect = CompositeVideoClip([colclip,effect])')
+            DBPrint2('effect = effect.fx(vfx.rotate, lambda t: angle*t*t, expand=False).set_duration(3)')
+            DBPrint2('effect = CompositeVideoClip([colclip,effect])')
+            DBPrint2('effect = concatenate_videoclips([effect,colclip.set_duration(0.5)])')
+            DBPrint2(vdestnm," = JointVideoAfterEffect(before, effect, None))")
+            before, effect, after = SplitVideoForEffect(clip, duration-3.3, 3)
+            effect = effect.resize(lambda t: 0.00001+(3-t)/(3)).set_position("center","center")
+            colclip = ColorClip((OutWidth,OutHeight), color, duration=effect.duration)
+            effect = CompositeVideoClip([colclip,effect])
+            effect = effect.fx(vfx.rotate, lambda t: angle*t*t, expand=False).set_duration(3)
+            effect = CompositeVideoClip([colclip,effect])
+            effect = concatenate_videoclips([effect,colclip.set_duration(0.5)])
+            VSetClip(vdestnm, JointVideoAfterEffect(before, effect, None))
         elif command=="EffectCrossFadeout":
             # EffectCrossFadeout dest1 source2 source3 duration4
             CheckArgument(c, 4, command, lineno)
@@ -1471,40 +1594,46 @@ def ParseCommand(commands):
             # VideoSideBySide dest1 source1 start1 source2 start2 source3 start3 source4 start4
             CheckMinArgument(c, 9, 13, command, lineno)
             if nbarguments != 9 and nbarguments != 13: Error(lineno, "VideoSideBySide only support 4 or 6 video (9, or  13 arguments with their starting times), found "+str(nbarguments))
+            if fps<=0: fps=25
             volume=1/6
             if nbarguments == 9: volume=1/4
             vdestnm = VClipName(c[1])
             cl1 = VGetClip(c[2]).volumex(volume)
             cl1n = VClipName(c[2])
             cl1 = cl1.set_start(DecodeTime(c[3]))
+            fps=max(fps,cl1.fps)
             cl2 = VGetClip(c[4]).volumex(volume)
             cl2n = VClipName(c[4])
             cl2 = cl2.set_start(DecodeTime(c[5]))
+            fps=max(fps,cl2.fps)
             cl3 = VGetClip(c[6]).volumex(volume)
             cl3n = VClipName(c[6])
             cl3 = cl3.set_start(DecodeTime(c[7]))
+            fps=max(fps,cl3.fps)
             cl4 = VGetClip(c[8]).volumex(volume)
             cl4n = VClipName(c[8])
             cl4 = cl4.set_start(DecodeTime(c[9]))
+            fps=max(fps,cl4.fps)
             if nbarguments == 13:
                 cl5 = VGetClip(c[10]).volumex(volume)
                 cl5n = VClipName(c[10])
                 cl5 = cl5.set_start(DecodeTime(c[11]))
+                fps=max(fps,cl1.fps)
                 cl6 = VGetClip(c[12]).volumex(volume)
                 cl6n = VClipName(c[12])
                 cl6 = cl6.set_start(DecodeTime(c[13]))
+                fps=max(fps,cl1.fps)
                 DBPrint2(vdestnm, " = clips_array([[", cl1n, ", ", cl2n, ", ", cl3n, "], [", cl4n, ", ", cl5n, ", ", cl6n, "]]).fx(afx.audio_normalize)")
                 cl =  clips_array([[cl1, cl2, cl3], [cl4, cl5, cl6]])
-                #cl = cl.set_fps(25)
+                cl = cl.set_fps(fps)
                 #cl = cl.fx(afx.audio_normalize)
                 VSetClip(vdestnm, cl)
             else:
                 DBPrint2(vdestnm, " = clips_array([[", cl1n, ", ", cl2n, "], [", cl3n, ", ", cl4n, "]]).fx(afx.audio_normalize)")
                 cl = clips_array([[cl1, cl2], [cl3, cl4]])
                 cl = CompositeVideoClip([cl])
-                #cl = cl.set_fps(25)
-                #
-                cl = cl.fx(afx.audio_normalize)
+                cl = cl.set_fps(fps)
+                #cl = cl.fx(afx.audio_normalize)
                 VSetClip(vdestnm, cl)
         elif command=="EffectThreshold":
             # EffectThreshold dest1 source2 Threshold3
@@ -1530,6 +1659,7 @@ def ParseCommand(commands):
             vsrcnm = VClipName(c[2])
             vsrcncl = VGetClip(vsrcnm)
             backgroundpic = os.path.join(videopath, DecodeText(c[3]))
+            if not os.path.isfile(backgroundpic): Error(lineno, "File "+backgroundpic+" does not exist!")
             start = DecodeTime(c[4])
             duration = DecodeTime(c[5])
             DBPrint2("before, effect, after = SplitVideoForEffect(",vsrcnm,", ", start,", ",duration,")")
@@ -1543,6 +1673,22 @@ def ParseCommand(commands):
                 effect = CompositeVideoClip([back, effect]).set_duration(effect.duration).set_start(start)
             DBPrint2(vdestnm," = JointVideoAfterEffect(before, effect, after))")
             VSetClip(vdestnm, JointVideoAfterEffect(before, effect, after))
+        elif command=="EffectZoomZone":
+            # EffectZoomZone dest1 picture2 x3 y4 x5 y6 duration7 duration8 color9 keep10
+            CheckArgument(c, 10, command, lineno)
+            vdestnm = VClipName(c[1])
+            image = os.path.join(videopath, DecodeText(c[2]))
+            if not os.path.isfile(image): Error(lineno, "File "+image+" does not exist!")
+            x1 = int(c[3])
+            y1 = int(c[4])
+            x2 = int(c[5])
+            y2 = int(c[6])
+            duration1 = int(c[7])
+            duration2 = int(c[8])
+            color = DecodeColor(c[9])
+            keep = DecodeBoolean(c[10])
+            DBPrint2(vdestnm, " = ZoomZone.ImageZoomZone(",image,", ",x1,", y1, ",x2,", y2, ", duration1,", ",duration2,", ",color,", ",keep,", ",fps,")")
+            VSetClip(vdestnm, ZoomZone.ImageZoomZone(image, x1, y1, x2, y2, duration1, duration2, color, keep, fps))
         elif command=="ReducingCircle":
             # ReducingCircle dest1 source2 text3 start4 duration5
             CheckArgument(c, 5, command, lineno)
@@ -1664,20 +1810,27 @@ def ParseCommand(commands):
             if nbarguments>3: codec = DecodeText(c[4])
             if nbarguments>4: audiocodec = DecodeText(c[5])
             DBPrint(vsrcnm+" = "+c[1]+".resize(newsize=(OutWidth,OutHeight))")
-            DBPrint(vsrcnm+".write_videofile("+T(file)+", fps=" + str(fps) +", codec="+T(codec)+", bitrate="+T(bitrate)+", audio_codec="+T(audiocodec)+")")
+            DBPrint(vsrcnm+".write_videofile("+T(file)+", fps=" + str(fps) +", codec="+T(codec)+", bitrate="+T(bitrate)+", audio_codec="+T(audiocodec)+", threads="+T(THREADNB)+")")
             cl = cl.resize(newsize=(OutWidth,OutHeight))
-            cl.write_videofile(file, fps=fps, codec=codec, bitrate=bitrate, audio_codec=audiocodec)
+            cl.write_videofile(file, fps=fps, codec=codec, bitrate=bitrate, audio_codec=audiocodec,threads=THREADNB)
             open(file)
+        # Template for new effects
         elif command=="":
             # Template dest1 source2 file3
             CheckArgument(c, 0, command, lineno)
+            #CheckMinArgument(c, 3, 6, command, lineno)
             vdestnm = VClipName(c[1])
             vdestcl = VGetClip(vdestnm)
             vsourcenm = VClipName(c[2])
             vsourcecl = VGetClip(vsourcenm)
             file = os.path.join(videopath,c[3])
-            DBPrint2("")
-            VSetClip(vdestnm, vsourcecl)
+            if not os.path.isfile(file): Error(lineno, "File "+file+" does not exist!")
+            #if nbarguments>3:
+            DBPrint2("clipBefore, clipEffect, clipAfter = SplitVideoForEffect(",source,", ",start,", ", duration,")")
+            clipBefore, clipEffect, clipAfter = SplitVideoForEffect(source, start, eduration)
+            DBPrint2(vdestnm," = JointVideoAfterEffect(before, effect, after))")
+            VSetClip(vdestnm, JointVideoAfterEffect(before, effect, after))
+            #VSetClip(vdestnm, vsourcecl)
 
 def BuildDemo():
     global videopath
@@ -1719,8 +1872,8 @@ def main():
     NeedCode=False
     Debug=False
     start_time = time.time()
-    #runFile(videopath+"VideoScript.txt")
-    BuildDemo()
+    runFile(videopath+"VideoScript.txt")
+    #BuildDemo()
     print("DONE IN %s seconds" % (time.time() - start_time))
     
 if __name__ =='__main__':
