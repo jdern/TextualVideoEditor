@@ -4,11 +4,8 @@ Font "Arial" 80 "white" "transparent" "white" 0
 
 # Clip de départ
 Load C1 "Demofiles/1.mp4"
-Load C2 "Demofiles/2.mp4"
 
-EffectFadeout C2 C2 2 (0,0,0)
-
-Merge C_Video C1 C2
+EffectClipInvertColors C_Video C1 1 2
 
 # Creating video
-Create C_Video "Examples/EffectFadeout.mp4" 24 libx264
+Create C_Video "Examples/EffectClipInvertColors.mp4" 24 libx264

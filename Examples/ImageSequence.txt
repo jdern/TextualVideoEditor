@@ -1,9 +1,9 @@
 # Initialisation
-TargetSize 1920 1080
+TargetSize 720p
 Font "Arial" 80 "white" "transparent" "white" 0
 
 # Clip de départ
-ImageSequence C_Video "Cat*.png" 0.1
+ImageSequence C_Video "Demofiles/Cat*.png" 0.1
 
 # Creating video
 Create C_Video "Examples/ImageSequence.mp4" 24 libx264

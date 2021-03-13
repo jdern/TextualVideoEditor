@@ -1,11 +1,11 @@
-TargetSize 1080p 25
+TargetSize 720p 25
 Font "Arial" 100 "white" "transparent" "black" 2
 
 #### Intro ####
-Load V1 "1.mp4"
-Load V2 "2.mp4"
-Load V3 "3.mp4"
-Load V4 "4.mp4"
+Load V1 "Demofiles/1.mp4"
+Load V2 "Demofiles/2.mp4"
+Load V3 "Demofiles/3.mp4"
+Load V4 "Demofiles/4.mp4"
 VideoSideBySide CColor V1 0 V2 1 V3 2 V4 3
 
 # Creating video

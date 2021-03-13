@@ -1,6 +1,7 @@
-TargetSize 1920 1080
+TargetSize 720p
 
-Load V "1.mp4"
+Load V "Demofiles/1.mp4"
+
 Font "ArialUnicode" 60 "green" "grey" "None" 0
 TextTimeCode V V "TCR " 0 0 (left, bottom)
 

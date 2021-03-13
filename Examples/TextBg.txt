@@ -3,7 +3,7 @@ TargetSize 1920 1080
 Font "Arial" 80 "white" "transparent" "white" 0
 
 # Clip de départ
-Load C_start "1.mp4"
+Load C_start "Demofiles/1.mp4"
 
 # Titre
 TextBg C_Video C_start "Title" 10 (center,center) (0,0,0)

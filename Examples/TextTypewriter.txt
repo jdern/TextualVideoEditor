@@ -1,12 +1,12 @@
 # Initialisation
-TargetSize 1920 1080
+TargetSize 720p
 Font "Arial" 80 "white" "transparent" "white" 0
 
 # Clip de départ
-Load C_start "1.mp4"
+Load C_start "Demofiles/1.mp4"
 
 # Titre
-TextTypewriter C_Video C_start "Jérôme c'est\nmon nom" "center" 2 4
+TextTypewriter C_Video C_start "Jérôme its\nmy firstname" "center" 2 4
 
 # Creating video
 Create C_Video "Examples/TextTypewriter.mp4" 24 libx264

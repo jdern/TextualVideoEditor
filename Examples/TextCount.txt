@@ -1,7 +1,7 @@
-TargetSize 640 360
+TargetSize 720p
 Font "ArialUnicode" 100 "white" "transparent" "black" 2
 
-Load V "1.mp4"
+Load V "Demofiles/1.mp4"
 TextCount V V 0 0 1 (center, center)
 
 # Creating video

@@ -1,9 +1,9 @@
 # Initialisation
-TargetSize 1920 1080
+TargetSize 720p
 Font "Arial" 80 "white" "transparent" "white" 0
 
 # Clip de départ
-ImageSequenceZoomin C_Video "Cat*.png" 5
+ImageSequenceZoomin C_Video "Demofiles/Cat*.png" 5
 
 # Creating video
 Create C_Video "Examples/ImageSequenceZoomin.mp4" 24 libx264

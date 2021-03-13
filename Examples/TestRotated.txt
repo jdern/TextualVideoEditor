@@ -1,10 +1,9 @@
 # Initialisation
-SetPath "/Volumes/Données/Programmation/VideoEdit/"
-TargetSize 1920 1080
+TargetSize 720p
 Font "Arial" 80 "white" "transparent" "white" 0
 
 # Clip de départ
-Load C_start "1.mp4"
+Load C_start "Demofiles/1.mp4"
 
 # Add rotated text
 Text C_Video C_start "Test" 4 (center, center) 1 40

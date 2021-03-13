@@ -1,0 +1,21 @@
+# Initialisation
+TargetSize 1920 1080
+
+# Clip de départ
+EffectZoomZone C1 "Demofiles/Documentation.png" 1460   59 2530  285 3 3  (255,255,255) False
+EffectZoomZone C2 "Demofiles/Documentation.png"  235  285 2060 1310 3 5  (255,255,255) True
+EffectZoomZone C3 "Demofiles/Documentation.png"  235 1320 2065 1790 3 6  (255,255,255) True
+EffectZoomZone C4 "Demofiles/Documentation.png" 2080  285 3910 2110 3 10 (255,255,255) True
+EffectZoomZone C5 "Demofiles/Documentation.png"  235 1810 2070 3440 3 9  (255,255,255) True
+EffectZoomZone C6 "Demofiles/Documentation.png" 2080 2130 3910 3750 3 10 (255,255,255) True
+EffectZoomZone C7 "Demofiles/Documentation.png"  235 3440 2070 5760 3 10 (255,255,255) True
+EffectZoomZone C8 "Demofiles/Documentation.png" 2080 3760 3910 5000 3 9  (255,255,255) True
+EffectZoomZone C9 "Demofiles/Documentation.png" 2080 5005 3910 5750 3 5  (255,255,255) True
+
+#Font "Arial" 50 "black" "transparent" "black" 0
+#Text C_Video C_Video "EffectClipRotateScale: 3 seconds at the end of the clip" 3 (center, center) 0 0
+
+MergeAll C_Video
+
+# Creating video
+Create C_Video "Examples/EffectZoomZone.mp4" 24 libx264

@@ -1,9 +1,9 @@
 # Initialisation
-TargetSize 1080p
+TargetSize 720p
 Font "Arial" 80 "white" "transparent" "white" 0
 
 # Clip de départ
-Load C_start "1.mp4"
+Load C_start "Demofiles/1.mp4"
 
 # Titre
 TextBgBottomSlide C_Title C_start "Title" 5 bottom (0,0,0)

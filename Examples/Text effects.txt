@@ -1,12 +1,12 @@
 # Initialisation
-TargetSize 1920 1080
+TargetSize 720p
 Font "Arial" 80 "white" "transparent" "white" 0
 
 # Clip de départ
-Load C1 "1.mp4"
-Load C2 "2.mp4"
-Load C3 "3.mp4"
-Load C4 "4.mp4"
+Load C1 "Demofiles/1.mp4"
+Load C2 "Demofiles/2.mp4"
+Load C3 "Demofiles/3.mp4"
+Load C4 "Demofiles/4.mp4"
 
 # Titre
 TextVortex C1 C1 "TextVortex Effect" center 2 5
@@ -16,7 +16,7 @@ TextVortexout C4 C4 "TextVortexout Effect" center 2 5
 
 
 # Merge des clips et écriture
-MergeFadein C_Video C1 C2 C3 C4
+Merge C_Video C1 C2 C3 C4
 
 # Creating video
 Create C_Video "Examples/Text effects.mp4" 24 libx264

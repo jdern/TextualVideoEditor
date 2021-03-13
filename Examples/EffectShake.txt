@@ -1,6 +1,9 @@
-TargetSize 1920 1080
-Load V "1.mp4"
+TargetSize 720p
+
+Load V "Demofiles/1.mp4"
+
 EffectShake V V "Picture.png" 1 2
+
 # Creating video
-Create V "Examples/TextTimeCode.mp4"
+Create V "Examples/EffectShake.mp4"
 

@@ -1,0 +1,14 @@
+# Initialisation
+TargetSize 720p
+Font "Arial" 80 "white" "transparent" "white" 0
+
+# Clip de départ
+Load C1 "Demofiles/1.mp4"
+
+EffectClipRotateScale C1 C1 (0,0,0)
+
+Font "Arial" 50 "white" "transparent" "white" 0
+Text C_Video C1 "EffectClipRotateScale: 3 seconds at the end of the clip" 3 (center, center) 0 0
+
+# Creating video
+Create C_Video "Examples/EffectClipRotateScale.mp4" 24 libx264
