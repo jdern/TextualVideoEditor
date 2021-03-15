@@ -6,7 +6,7 @@ Font "Arial" 80 "white" "transparent" "white" 0
 Load C_start "Demofiles/1.mp4"
 
 # Add sound
-VideoAddSound C_Video C_start "Demofiles/Sound.wav" 1 5
+VideoAddSound C_Video C_start "Demofiles/Sound.mp3" 1 5
 
 # Creating video
 Create C_Video "Examples/VideoAddSound.mp4" 24 libx264
