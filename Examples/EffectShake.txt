@@ -2,7 +2,7 @@ TargetSize 720p
 
 Load V "Demofiles/1.mp4"
 
-EffectShake V V "Picture.png" 1 2
+EffectShake V V "Demofiles/Picture.png" 1 2
 
 # Creating video
 Create V "Examples/EffectShake.mp4"
