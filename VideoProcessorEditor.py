@@ -2,11 +2,13 @@
 import os
 import subprocess
 import glob
+import ntpath
+import math
+import tempfile
+
 from natsort import natsorted
 import numpy as np
-import math
 from gtts import gTTS
-import tempfile
 from PIL import Image
 import cv2
 os.environ["IMAGEMAGICK_BINARY"] = r"/opt/homebrew/Cellar/imagemagick/7.0.11-2/bin/convert"
@@ -57,8 +59,8 @@ import ZoomZone
 
 Image.MAX_IMAGE_PIXELS = 933120000
 
-videopath = "/Volumes/Données/Programmation/VideoEdit/"
-ToolPath  = "/Volumes/Données/Programmation/PythonScripts/VideoProcessor/"
+videopath = "./"
+ToolPath  = "./"
 OutWidth = 1920
 OutHeight = 1080
 fontname = "ArialUnicode"
@@ -778,7 +780,7 @@ def ParseCommand(commands):
             cl = vfx.rotate(cl, 90)
             VSetClip(vdestnm, cl)
         elif command=="Subclip" or command=="Cutout" : # Tested
-            # Subclip dest1 source2 strat3 end4
+            # Subclip dest1 source2 start3 end4
             CheckMinArgument(c, 3, 4, command, lineno)
             vdestnm = VClipName(c[1])
             vsrcnm = VClipName(c[2])
@@ -1739,7 +1741,7 @@ def ParseCommand(commands):
             VSetClip(vdestnm, concatenate_videoclips(l))
         elif command=="AllTogether":
             # AllTogether dest1 source2 text3 source3 text4...
-            CheckMinArgument(c, 4, 0, command, lineno)
+            CheckMinArgument(c, 5, 0, command, lineno)
             vdestnm = VClipName(c[1])
             vsrcnm = VClipName(c[2])
             cl = VGetClip(vsrcnm)
@@ -1835,7 +1837,9 @@ def ParseCommand(commands):
 def BuildDemo():
     global videopath
     file_list = glob.glob(os.path.join(videopath,"Examples/*.txt"))
-    for file in file_list: runFile(file)
+    for file in file_list:
+        if not os.path.isfile(file.replace(".txt", ".mp4")):
+            runFile(file, ntpath.basename(file))
 
 def ClearAndCloseAllClips():
     global VClips, AClips, LastVClipAccessed, LastAClipAccessed
@@ -1851,9 +1855,8 @@ def ClearAndCloseAllClips():
     LastVClipAccessed=""
     LastAClipAccessed=""
     
-def runFile(file):
+def runFile(file, name):
     global MoviepyCode, VClips, AClips, videopath, OutWidth, OutHeight, LastVClipAccessed, LastAClipAccessed
-    print("Execution of "+file)
     VClips = dict()
     AClips = dict()
     MoviepyCode=""
@@ -1863,19 +1866,36 @@ def runFile(file):
     ParseCommand(l)
     if NeedCode:
         FlushPythonCode()
-        with open(os.path.join(videopath,"Output.py"), "w") as text_file:
+        with open(os.path.join(videopath,name+".py"), "w") as text_file:
             text_file.write(MoviepyCode)
     ClearAndCloseAllClips()
 
-def main():
+def main(script):
     global NeedCode, Debug, videopath, ToolPath
     NeedCode=False
     Debug=False
+    videopath = os.getcwd()
+    ToolPath = videopath
     start_time = time.time()
-    runFile(videopath+"VideoScript.txt")
-    #BuildDemo()
+    if script=="":
+        BuildDemo()
+    else:
+        path, name = ntpath.split(script)
+        if path!="": videopath = path
+        print("# Executing script "+name)
+        runFile(script, name)
     print("DONE IN %s seconds" % (time.time() - start_time))
     
 if __name__ =='__main__':
-    main()
+    # VideoProcessorEditor demo
+    # VideoProcessorEditor file.txt
+    argv = sys.argv
+    if len(argv)<1:
+        main("VideoScript.txt")
+    else:
+        for arg in args:
+            if arg.find("demo")>=0:
+                main("")
+            else:
+                main(arg)
     exit()
