@@ -3,9 +3,9 @@ Video editing without graphical interface, just textual description
 
 # Simple example
 
-\# Initialisation, final video will be 1920x1080 in 30fps
+\# Initialisation, final video will be 1920x1080
 
-TargetSize 1920 1080 30
+TargetSize 1920 1080
 
 \# Load a first clip from demo files and name it V1
 
@@ -15,6 +15,6 @@ Load V1 "Demofiles/1.MP4"
 
 TextCircleCounter C_Video V1 128 ("right","top") 0 10
 
-\# Creating video
+\# Creating the final video from C_Video and save it in mp4 format in 30fps
 
-Create C_Video "Examples/TextCircleCounter.mp4" 24 libx264
+Create C_Video "Examples/TextCircleCounter.mp4" 30 libx264
