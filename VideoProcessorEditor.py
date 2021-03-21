@@ -11,8 +11,8 @@ import numpy as np
 from gtts import gTTS
 from PIL import Image
 import cv2
-os.environ["IMAGEMAGICK_BINARY"] = r"/opt/homebrew/Cellar/imagemagick/7.0.11-2/bin/convert"
-
+#os.environ["IMAGEMAGICK_BINARY"] = r"/opt/homebrew/Cellar/imagemagick/7.0.11-2/bin/convert"
+import cairocffi as cairo
 from moviepy.video.tools.drawing import *
 from moviepy.editor import *
 from moviepy.video.tools import *
@@ -53,9 +53,11 @@ from moviepy.audio.fx.audio_loop import audio_loop
 from moviepy.audio.fx.audio_normalize import audio_normalize
 from moviepy.audio.fx.volumex import volumex
 from moviepy.video.tools.segmenting import findObjects
-from skimage.filters import gaussian
+
+#from skimage.filters import gaussian
 from random import randint
 import ZoomZone
+import GizehEffects
 
 Image.MAX_IMAGE_PIXELS = 933120000
 
@@ -322,8 +324,7 @@ def FlushPythonCode():
 
 def Error(line, text):
     global AClips, VClips
-    print(VClips)
-    print(AClips)
+    print()
     if line!=0:
         print("Error at line "+str(line)+": "+text)
     else:
@@ -1042,6 +1043,42 @@ def ParseCommand(commands):
                 cliplist.append(cl)
             DBPrint2(vdestnm,"=CompositeVideoClip(cliplist)")
             VSetClip(vdestnm, CompositeVideoClip(cliplist))
+        elif command == "TextCircleCounter":
+            # TextCircleCounter dest1 source2 size3 duration4 position5 start6 end7
+            CheckArgument(c, 7, command, lineno)
+            vdestnm = VClipName(c[1])
+            vsrcnm = VClipName(c[2])
+            vsrccl = VGetClip(vsrcnm)
+            size = int(c[3])
+            duration = DecodeTime(c[4])
+            position = DecodePosition(c[5])
+            start = DecodeTime(c[6])
+            end = DecodeTime(c[7])
+            if end == 0: end = vsrccl.duration
+            DBPrint2("before, effect, after = SplitVideoForEffect(",vsrcnm,", ",start,", ",duration,")")
+            before, effect, after = SplitVideoForEffect(vsrccl, start, duration)
+            DBPrint2("effect = GizehEffects.AddCircleCounter(effect, ",size,", ",duration,", ",position,", 0)")
+            effect = GizehEffects.AddCircleCounter(effect, size, duration, position, 0)
+            DBPrint2(vdestnm," = JointVideoAfterEffect(before, effect, after))")
+            VSetClip(vdestnm, JointVideoAfterEffect(before, effect, after))
+        elif command == "TextCircleCounterDown":
+            # TextCircleCounterDown dest1 source2 size3 duration4 position5 start6 end7
+            CheckArgument(c, 7, command, lineno)
+            vdestnm = VClipName(c[1])
+            vsrcnm = VClipName(c[2])
+            vsrccl = VGetClip(vsrcnm)
+            size = int(c[3])
+            duration = DecodeTime(c[4])
+            position = DecodePosition(c[5])
+            start = DecodeTime(c[6])
+            end = DecodeTime(c[7])
+            if end == 0: end = vsrccl.duration
+            DBPrint2("before, effect, after = SplitVideoForEffect(",vsrcnm,", ",start,", ",duration,")")
+            before, effect, after = SplitVideoForEffect(vsrccl, start, duration)
+            DBPrint2("effect = GizehEffects.AddCircleCounter(effect, ",size,", ",duration,", ",position,", ",int(duration),")")
+            effect = GizehEffects.AddCircleCounter(effect, size, duration, position, int(duration))
+            DBPrint2(vdestnm," = JointVideoAfterEffect(before, effect, after))")
+            VSetClip(vdestnm, JointVideoAfterEffect(before, effect, after))
 ###### PICTURE FUNCTIONS #######
         elif command=="Image":
             # Image dest1 sourcepic2 duration3 scale4 
@@ -1889,11 +1926,12 @@ def main(script):
 if __name__ =='__main__':
     # VideoProcessorEditor demo
     # VideoProcessorEditor file.txt
-    argv = sys.argv
-    if len(argv)<1:
-        main("VideoScript.txt")
+    args = sys.argv
+    if len(args)<2:
+        main("/Volumes/Données/Programmation/VideoEdit/VideoScript.txt")
     else:
         for arg in args:
+            if arg=="VideoProcessorEditor.py": continue
             if arg.find("demo")>=0:
                 main("")
             else:
