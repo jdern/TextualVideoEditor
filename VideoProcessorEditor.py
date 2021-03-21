@@ -1044,17 +1044,17 @@ def ParseCommand(commands):
             DBPrint2(vdestnm,"=CompositeVideoClip(cliplist)")
             VSetClip(vdestnm, CompositeVideoClip(cliplist))
         elif command == "TextCircleCounter":
-            # TextCircleCounter dest1 source2 size3 duration4 position5 start6 end7
-            CheckArgument(c, 7, command, lineno)
+            # TextCircleCounter dest1 source2 size3 position4 start5 end6
+            CheckArgument(c, 6, command, lineno)
             vdestnm = VClipName(c[1])
             vsrcnm = VClipName(c[2])
             vsrccl = VGetClip(vsrcnm)
             size = int(c[3])
-            duration = DecodeTime(c[4])
-            position = DecodePosition(c[5])
-            start = DecodeTime(c[6])
-            end = DecodeTime(c[7])
+            position = DecodePosition(c[4])
+            start = DecodeTime(c[5])
+            end = DecodeTime(c[6])
             if end == 0: end = vsrccl.duration
+            duration = end-start
             DBPrint2("before, effect, after = SplitVideoForEffect(",vsrcnm,", ",start,", ",duration,")")
             before, effect, after = SplitVideoForEffect(vsrccl, start, duration)
             DBPrint2("effect = GizehEffects.AddCircleCounter(effect, ",size,", ",duration,", ",position,", 0)")
@@ -1062,17 +1062,17 @@ def ParseCommand(commands):
             DBPrint2(vdestnm," = JointVideoAfterEffect(before, effect, after))")
             VSetClip(vdestnm, JointVideoAfterEffect(before, effect, after))
         elif command == "TextCircleCounterDown":
-            # TextCircleCounterDown dest1 source2 size3 duration4 position5 start6 end7
-            CheckArgument(c, 7, command, lineno)
+            # TextCircleCounterDown dest1 source2 size3 position4 start5 end6
+            CheckArgument(c, 6, command, lineno)
             vdestnm = VClipName(c[1])
             vsrcnm = VClipName(c[2])
             vsrccl = VGetClip(vsrcnm)
             size = int(c[3])
-            duration = DecodeTime(c[4])
-            position = DecodePosition(c[5])
-            start = DecodeTime(c[6])
-            end = DecodeTime(c[7])
+            position = DecodePosition(c[4])
+            start = DecodeTime(c[5])
+            end = DecodeTime(c[6])
             if end == 0: end = vsrccl.duration
+            duration = end-start
             DBPrint2("before, effect, after = SplitVideoForEffect(",vsrcnm,", ",start,", ",duration,")")
             before, effect, after = SplitVideoForEffect(vsrccl, start, duration)
             DBPrint2("effect = GizehEffects.AddCircleCounter(effect, ",size,", ",duration,", ",position,", ",int(duration),")")
